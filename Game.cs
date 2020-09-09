@@ -4,6 +4,15 @@ using System.Text;
 
 namespace HelloWorld
 {
+    struct player
+    {
+        public int health;
+        public float speed;
+        public bool isAlive;
+        public string name;
+        public int defense;
+        public int damage;
+    }
     class Game
     {
         bool _gameOver = false;
@@ -53,9 +62,9 @@ namespace HelloWorld
             }
 
             //Loops until the player or the enemy is dead
-            while(_playerHealth >= 0 || enemyHealth >= 0)
+            while(_playerHealth > 0 && enemyHealth > 0)
             {
-                //Displays the stats for both charactersa to the screen before the player takes their turn
+                //Displays the stats for both characters to the screen before the player takes their turn
                 PrintStats(_playerName, _playerHealth, _playerDamage, _playerDefense);
                 PrintStats(enemyName, enemyHealth, enemyAttack, enemyDefense);
 
@@ -65,29 +74,30 @@ namespace HelloWorld
                 //If input is 1, the player wants to attack. By default the enemy blocks any incoming attack
                 if(input == '1')
                 {
+                    enemyHealth -= _playerDamage;
+                    Console.WriteLine(enemyName + " took " + _playerDamage + " damage.");
+                    Console.Write("> ");
+                    Console.ReadKey();
+                    Console.Clear();
+                    //After the player attacks, the enemy takes its turn. Since the player decided not to defend, the block attack function is not called.
                     _playerHealth -= enemyAttack;
                     Console.WriteLine(enemyName + " dealt " + enemyAttack + " damage.");
                     Console.Write("> ");
                     Console.ReadKey();
+                    turnCount++;
                 }
                 //If the player decides to defend the enemy just takes their turn. However this time the block attack function is
                 //called instead of simply decrementing the health by the enemy's attack value.
                 else if(input =='2')
                 {
-                    BlockAttack(_playerHealth, enemyAttack, _playerDefense);
+                    UpgradeStats("You strategize for your next turn!");
+                    BlockAttack(ref _playerHealth, enemyAttack, _playerDefense);
                     Console.WriteLine(enemyName + " dealt " + enemyAttack + " damage.");
                     Console.Write("> ");
                     Console.ReadKey();
                     turnCount++;
                     Console.Clear();
                 }
-                Console.Clear();
-                //After the player attacks, the enemy takes its turn. Since the player decided not to defend, the block attack function is not called.
-                _playerHealth -= enemyAttack;
-                Console.WriteLine(enemyName + " dealt " + enemyAttack + " damage.");
-                Console.Write("> ");
-                Console.ReadKey();
-                turnCount++;
                 
             }
             //Return whether or not our player died
@@ -95,7 +105,7 @@ namespace HelloWorld
 
         }
         //Decrements the health of a character. The attack value is subtracted by that character's defense
-        int BlockAttack(int playerHealth, int attackVal, int opponentDefense)
+        int BlockAttack(ref int playerHealth, int attackVal, int opponentDefense)
         {
             attackVal -= opponentDefense;
             if(attackVal < 0)
@@ -105,8 +115,28 @@ namespace HelloWorld
             playerHealth -= attackVal;
             return playerHealth;
         }
+    //made a way to upgrade skills in any context
+    void UpgradeStats(string query)
+        {
+            Console.WriteLine(query);
+            Console.WriteLine("These are your current stats!");
+            PrintStats(_playerName, _playerHealth, _playerDamage, _playerDefense);
+            Console.WriteLine("What would you like to increase?");
+            GetInput(out char input, "damage", "health");
+            if (input == '1')
+            {
+                _playerDamage += 10;
+                Console.WriteLine("Your damage has been increased to " + _playerDamage);
+            }
+            else if (input == '2')
+            {
+                _playerHealth += 80;
+                Console.WriteLine("Your health has been increased to " + _playerHealth);
+            }
+
+        }
         //Scales up the player's stats based on the amount of turns it took in the last battle
-        void LevelUp(int turnCount)
+        void UpgradeStats(int turnCount)
         {
             //Subtract the amount of turns from our maximum level scale to get our current level scale
             int scale = levelScaleMax - turnCount;
@@ -121,21 +151,29 @@ namespace HelloWorld
         //Gets input from the player
         //Out's the char variable given. This variables stores the player's input choice.
         //The parameters option1 and option 2 displays the players current chpices to the screen
-        void GetInput(out char input,string option1, string option2)
-        {
-            //Initialize input
-            input = ' ';
-            //Loop until the player enters a valid input
-            while (input != '1' && input != '2')
+            void GetInput(out char input, string option1, string option2)
             {
-                Console.WriteLine("1." + option1);
-                Console.WriteLine("2." + option2);
-                Console.Write("> ");
-                input = Console.ReadKey().KeyChar;
-                if (input!= '1' && input != '2')
+                //Initialize input
+                input = ' ';
+                //Loop until the player enters a valid input
+                while (input != '1' && input != '2')
                 {
-                    Console.WriteLine("Invalid Input");
+                    Console.WriteLine("1." + option1);
+                    Console.WriteLine("2." + option2);
+                    Console.Write("> ");
+                    input = Console.ReadKey().KeyChar;
+                    if (input != '1' && input != '2')
+                    {
+                        Console.WriteLine("Invalid Input");
+                    }
                 }
+            }
+        void GetInput(out char input)
+        {
+            input = ' ';
+            if (input != '1' && input != '2' && input != '3')
+            {
+                Console.WriteLine("Invalid Input");
             }
         }
 
@@ -156,16 +194,19 @@ namespace HelloWorld
             {
                 case 0:
                     {
+                        UpgradeStats("What would you like to upgrade before this battle?");
                         Console.WriteLine("A wizard blocks your path");
                         break;
                     }
                 case 1:
                     {
+                        UpgradeStats("What would you like to upgrade before this battle?");
                         Console.WriteLine("A troll stands before you");
                         break;
                     }
                 case 2:
                     {
+                        UpgradeStats("What would you like to upgrade before this battle?");
                         Console.WriteLine("A giant has appeared!");
                         break;
                     }
@@ -179,8 +220,9 @@ namespace HelloWorld
             //Starts a battle. If the player survived the battle, level them up and then proceed to the next room.
             if(StartBattle(roomNum, ref turnCount))
             {
-                LevelUp(turnCount);
-                ClimbLadder(roomNum++);
+                UpgradeStats(turnCount);
+                ClimbLadder(roomNum + 1);
+                Console.Clear();
             }
             _gameOver = true;
 
